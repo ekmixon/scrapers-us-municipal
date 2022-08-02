@@ -21,9 +21,11 @@ class Cookcounty(Jurisdiction):
 
         for x in range(1, 18):
             org.add_post(
-                "District {}".format(x),
+                f"District {x}",
                 "Commissioner",
-                division_id='ocd-division/country:us/state:il/county:cook/council_district:{}'.format(x))
+                division_id=f'ocd-division/country:us/state:il/county:cook/council_district:{x}',
+            )
+
 
         org.add_post(
             "Board President",

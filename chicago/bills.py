@@ -9,12 +9,14 @@ import requests
 def sort_actions(actions):
     action_time = 'MatterHistoryActionDate'
     action_name = 'MatterHistoryActionName'
-    sorted_actions = sorted(actions,
-                            key = lambda x: (x[action_time].split('T')[0],
-                                             ACTION[x[action_name]]['order'],
-                                             x[action_time].split('T')[1]))
-
-    return sorted_actions
+    return sorted(
+        actions,
+        key=lambda x: (
+            x[action_time].split('T')[0],
+            ACTION[x[action_name]]['order'],
+            x[action_time].split('T')[1],
+        ),
+    )
 
 class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
     BASE_URL = 'http://webapi.legistar.com/v1/chicago'
@@ -82,7 +84,7 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
                     responsible_person = 'Daley, Richard M.'
                 else:
                     responsible_person = 'Emanuel, Rahm'
-            
+
 
             bill_action = {'description' : action_description,
                            'date' : action_date,
@@ -125,20 +127,20 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
 
             yield bill_action, votes
 
-    def scrape(self, window=3) :
+    def scrape(self, window=3):
         n_days_ago = datetime.datetime.utcnow() - datetime.timedelta(float(window))
-        for matter in self.matters(n_days_ago) :
+        # If a bill has a duplicate action item that's causing the entire scrape
+        # to fail, add it to the `problem_bills` array to skip it.
+        # For the time being...nothing to skip!
+
+        problem_bills = ['Or2011-189']
+
+        for matter in self.matters(n_days_ago):
             matter_id = matter['MatterId']
 
             date = matter['MatterIntroDate']
             title = matter['MatterTitle']
             identifier = matter['MatterFile']
-
-            # If a bill has a duplicate action item that's causing the entire scrape
-            # to fail, add it to the `problem_bills` array to skip it.
-            # For the time being...nothing to skip!
-
-            problem_bills = ['Or2011-189']
 
             if identifier in problem_bills:
                 continue
@@ -160,7 +162,7 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
                         title=title,
                         classification=bill_type,
                         from_organization={"name":"Chicago City Council"})
-            
+
             legistar_web = matter['legistar_url']
 
             legistar_api = 'http://webapi.legistar.com/v1/chicago/matters/{0}'.format(matter_id)
@@ -171,7 +173,7 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
             for identifier in alternate_identifiers:
                 bill.add_identifier(identifier)
 
-            for action, vote in self.actions(matter_id) :
+            for action, vote in self.actions(matter_id):
                 responsible_person = action.pop('responsible person')
                 act = bill.add_action(**action)
 
@@ -188,7 +190,7 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
                                                entity_id = _make_pseudo_id(name=body_name))
 
                 result, votes = vote
-                if result :
+                if result:
                     vote_event = VoteEvent(legislative_session=bill.legislative_session, 
                                            motion_text=action['description'],
                                            organization=action['organization'],
@@ -198,7 +200,7 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
                                            bill=bill)
 
                     vote_event.add_source(legistar_web)
-                    vote_event.add_source(legistar_api + '/histories')
+                    vote_event.add_source(f'{legistar_api}/histories')
 
                     for vote in votes :
                         vote_value = vote['VoteValueName']
@@ -227,9 +229,7 @@ class ChicagoBillScraper(LegistarAPIBillScraper, Scraper):
 
             bill.extras = {'local_classification' : matter['MatterTypeName']}
 
-            text = self.text(matter_id)
-
-            if text :
+            if text := self.text(matter_id):
                 if text['MatterTextPlain'] :
                     bill.extras['plain_text'] = text['MatterTextPlain']
 

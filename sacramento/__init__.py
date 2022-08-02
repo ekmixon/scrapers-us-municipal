@@ -27,8 +27,11 @@ class Sacramento(Jurisdiction):
                      division_id='ocd-division/country:us/state:ca/place:sacramento')
 
         for district in range(1, 9):
-            org.add_post(label='Sacramento City Council Member, District {}'.format(district),
-                         role='Member',
-                         division_id='ocd-division/country:us/state:ca/place:sacramento/council_district:{}'.format(district))
+            org.add_post(
+                label=f'Sacramento City Council Member, District {district}',
+                role='Member',
+                division_id=f'ocd-division/country:us/state:ca/place:sacramento/council_district:{district}',
+            )
+
 
         yield org

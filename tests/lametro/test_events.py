@@ -80,7 +80,7 @@ def test_events_paired(event_scraper, api_event, web_event, mocker):
     # Create a matching SAP event with a distinct ID
     sap_api_event = api_event.copy()
     sap_api_event['EventId'] = 1109
-    sap_api_event['EventBodyName'] = '{} (SAP)'.format(api_event['EventBodyName'])
+    sap_api_event['EventBodyName'] = f"{api_event['EventBodyName']} (SAP)"
 
     # Set a non-matching time to confirm time is not a match constraint
     sap_api_event['EventTime'] = '12:00 AM'
@@ -114,4 +114,4 @@ def test_events_paired(event_scraper, api_event, web_event, mocker):
         event_scraper._merge_events(events)
 
         event_key = LAMetroAPIEvent(sap_api_event).key
-        assert '{} already exists as a key'.format(event_key) in str(excinfo.value)
+        assert f'{event_key} already exists as a key' in str(excinfo.value)

@@ -32,9 +32,12 @@ class Lametro(Jurisdiction):
                      division_id='ocd-division/country:us/state:ca/place:los_angeles')
 
         for district in range(1, 6):
-            org.add_post('Los Angeles County Board Supervisor, District {}'.format(district),
-                         'Board Member',
-                         division_id='ocd-division/country:us/state:ca/county:los_angeles/council_district:{}'.format(district))
+            org.add_post(
+                f'Los Angeles County Board Supervisor, District {district}',
+                'Board Member',
+                division_id=f'ocd-division/country:us/state:ca/county:los_angeles/council_district:{district}',
+            )
+
 
         org.add_post('Appointee of Mayor of the City of Los Angeles',
                      'Board Member',

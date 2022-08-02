@@ -30,10 +30,10 @@ class EventScraper(Scraper):
     def scrape(self):
         meetings_html = self.urlopen(self.ARLINGTON_MEETING_PAGE)
         meetings_lxml = lxml.html.fromstring(meetings_html)
-        
+
         for meeting_type in ('archive', 'upcoming'):
-            for meeting in meetings_lxml.cssselect('#%s tbody tr' % meeting_type):
-                
+            for meeting in meetings_lxml.cssselect(f'#{meeting_type} tbody tr'):
+
                 # attempt to map the cells across table types. 
                 # if the sizes mismatch, ignore this one (it's an "empty" message)
                 try:
@@ -63,10 +63,11 @@ class EventScraper(Scraper):
                         link_url = link.attrib.get('href','')
                         if not len(link_url):
                             continue
-                        if 'metaviewer.php' in link_url.lower():
-                            # NOTE: application/pdf is a guess, may not always be correct
-                            if link.text is not None:
-                                e.add_document(name=link.text, url=link_url, mimetype='application/pdf') 
+                        if (
+                            'metaviewer.php' in link_url.lower()
+                            and link.text is not None
+                        ):
+                            e.add_document(name=link.text, url=link_url, mimetype='application/pdf') 
 
                 # skip everything below here for the 'upcoming' table
                 if meeting_type=='upcoming':
@@ -78,7 +79,7 @@ class EventScraper(Scraper):
                 if len(video_cell)>0:
                     video_url_match = re.search(r"http://(.*?)'", video_cell[0].attrib.get('onclick',''))
                     if video_url_match is not None:
-                        e.add_media_link(name="Video", url=video_url_match.group(0), mimetype='text/html')
+                        e.add_media_link(name="Video", url=video_url_match[0], mimetype='text/html')
 
                 # detect audio
                 audio_cell = cell_mapping['audio'].cssselect('a')

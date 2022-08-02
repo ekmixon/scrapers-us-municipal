@@ -57,19 +57,20 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
         is_board_correspondence = matter['MatterTypeName'] in {'Board Box', 'Board Correspondence'}
         is_not_sent = matter['MatterStatusName'] != 'Sent'
 
-        if (matter['MatterRestrictViewViaWeb'] or
-            matter['MatterStatusName'] == 'Draft' or
-            matter['MatterBodyName'] == 'TO BE REMOVED' or
-            (is_board_correspondence and is_not_sent) or
-            not matter.get('legistar_url')):
-            return True
-        else:
-            return False
+        return bool(
+            (
+                matter['MatterRestrictViewViaWeb']
+                or matter['MatterStatusName'] == 'Draft'
+                or matter['MatterBodyName'] == 'TO BE REMOVED'
+                or (is_board_correspondence and is_not_sent)
+                or not matter.get('legistar_url')
+            )
+        )
 
     def _show_attachment(self, attachment):
         return attachment['MatterAttachmentShowOnInternetPage']
 
-    def session(self, action_date) :
+    def session(self, action_date):
         from . import Lametro
 
         localize = pytz.timezone(self.TIMEZONE).localize
@@ -82,7 +83,7 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
             if localize(start_datetime) <= action_date <= localize(end_datetime):
                 return session['identifier']
 
-        raise ValueError("Invalid action date: {}".format(action_date))
+        raise ValueError(f"Invalid action date: {action_date}")
 
     def sponsorships(self, matter_id) :
         for i, sponsor in enumerate(self.sponsors(matter_id)) :
@@ -269,7 +270,7 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
             for identifier in alternate_identifiers:
                 bill.add_identifier(identifier)
 
-            for action, vote in self.actions(matter_id) :
+            for action, vote in self.actions(matter_id):
                 act = bill.add_action(**action)
 
                 if action['description'] == 'Referred' :
@@ -279,7 +280,7 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
                                            entity_id = _make_pseudo_id(name=body_name))
 
                 result, votes = vote
-                if result :
+                if result:
                     vote_event = VoteEvent(legislative_session=bill.legislative_session,
                                            motion_text=action['description'],
                                            organization=action['organization'],
@@ -289,7 +290,7 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
                                            bill=bill)
 
                     vote_event.add_source(legistar_web)
-                    vote_event.add_source(legistar_api + '/histories')
+                    vote_event.add_source(f'{legistar_api}/histories')
 
                     for vote in votes :
                         try:
@@ -328,9 +329,12 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
                     # Currently, the relation type for bills can be one of a few possibilites: https://github.com/opencivicdata/python-opencivicdata/blob/master/opencivicdata/common.py#L104
                     # Metro simply understands these as related files, suggesting that they receive a relation of 'companion'.
 
-            bill.add_version_link('Board Report',
-                                  'https://metro.legistar.com/ViewReport.ashx?M=R&N=TextL5&GID=557&ID={}&GUID=LATEST&Title=Board+Report'.format(matter_id),
-                                   media_type="application/pdf")
+            bill.add_version_link(
+                'Board Report',
+                f'https://metro.legistar.com/ViewReport.ashx?M=R&N=TextL5&GID=557&ID={matter_id}&GUID=LATEST&Title=Board+Report',
+                media_type="application/pdf",
+            )
+
 
             for attachment in self.attachments(matter_id) :
                 if attachment['MatterAttachmentName'] and self._show_attachment(attachment):
@@ -341,9 +345,7 @@ class LametroBillScraper(LegistarAPIBillScraper, Scraper):
             bill.extras['local_classification'] = matter['MatterTypeName']
 
             matter_version_value = matter['MatterVersion']
-            text = self.text(matter_id, matter_version_value)
-
-            if text :
+            if text := self.text(matter_id, matter_version_value):
                 if text['MatterTextPlain'] :
                     bill.extras['plain_text'] = text['MatterTextPlain']
 

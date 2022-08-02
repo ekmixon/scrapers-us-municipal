@@ -13,9 +13,9 @@ class CookcountyPersonScraper(Scraper, LegistarPersonScraper):
     def scrape(self):
         committee_d = {}
 
-        for councilman, committees in self.councilMembers() :
+        for councilman, committees in self.councilMembers():
 
-            p = Person(' '.join((councilman['First name'], councilman['Last name']))) 
+            p = Person(' '.join((councilman['First name'], councilman['Last name'])))
             if p.name == 'Toni Preckwinkle' :
                 continue
             elif p.name == 'Robert Steele' :
@@ -35,10 +35,14 @@ class CookcountyPersonScraper(Scraper, LegistarPersonScraper):
             else :
                 end_date = end_date.isoformat()
 
-            p.add_term('Commissioner', 'legislature', 
-                       district='District {}'.format(district), 
-                       start_date=start_date.isoformat(),
-                       end_date=end_date)
+            p.add_term(
+                'Commissioner',
+                'legislature',
+                district=f'District {district}',
+                start_date=start_date.isoformat(),
+                end_date=end_date,
+            )
+
 
             if councilman["E-mail"]:
                 p.add_contact_detail(type="email",
@@ -54,9 +58,8 @@ class CookcountyPersonScraper(Scraper, LegistarPersonScraper):
             for committee, _, _ in committees:
                 committee_name = committee['Department Name']['label']
 
-                if 'committee' in committee_name.lower() :
-                    o = committee_d.get(committee_name, 
-                                        None)
+                if 'committee' in committee_name.lower():
+                    o = committee_d.get(committee_name)
                     if o is None:
                         o = Organization(committee_name,
                                          classification='committee',
@@ -68,5 +71,4 @@ class CookcountyPersonScraper(Scraper, LegistarPersonScraper):
                     membership.start_date = self.mdY2Ymd(committee["Start Date"])
             yield p
 
-        for o in committee_d.values() :
-            yield o
+        yield from committee_d.values()

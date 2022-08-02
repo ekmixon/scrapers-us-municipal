@@ -30,27 +30,32 @@ class ChicagoPersonScraper(LegistarAPIPersonScraper, Scraper):
             web_scraper.cache_write_only = False
 
 
-        web_info = {}
-        for member, _ in web_scraper.councilMembers({'ctl00$ContentPlaceHolder$lstName' : 'City Council'}):
-            web_info[member['Person Name']['label']] = member
-
+        web_info = {
+            member['Person Name']['label']: member
+            for member, _ in web_scraper.councilMembers(
+                {'ctl00$ContentPlaceHolder$lstName': 'City Council'}
+            )
+        }
 
         web_info['Balcer, James'] = collections.defaultdict(lambda : None)
         web_info['Fioretti, Bob'] = collections.defaultdict(lambda : None)
         web_info['Balcer, James']['Ward/Office'] = 11
         web_info['Fioretti, Bob']['Ward/Office'] = 2
-        
+
         members = {}
         for member, offices in terms.items():
             web = web_info[member]
             p = Person(member)
             for term in offices:
                 role = term['OfficeRecordTitle']
-                p.add_term('Alderman',
-                           'legislature',
-                           district = "Ward {}".format(int(web['Ward/Office'])),
-                           start_date = self.toDate(term['OfficeRecordStartDate']),
-                           end_date = self.toDate(term['OfficeRecordEndDate']))
+                p.add_term(
+                    'Alderman',
+                    'legislature',
+                    district=f"Ward {int(web['Ward/Office'])}",
+                    start_date=self.toDate(term['OfficeRecordStartDate']),
+                    end_date=self.toDate(term['OfficeRecordEndDate']),
+                )
+
 
             if web.get('Photo'):
                 p.image = web['Photo']
@@ -99,7 +104,7 @@ class ChicagoPersonScraper(LegistarAPIPersonScraper, Scraper):
                     # messed up record for joanna thompson
                     if office['OfficeRecordId'] == 1055:
                         continue
-                        
+
                     role = office['OfficeRecordTitle']
                     if role not in ("Vice Chair", "Chairman"):
                         role = 'Member'
@@ -109,7 +114,7 @@ class ChicagoPersonScraper(LegistarAPIPersonScraper, Scraper):
                         p = members[person]
                     else:
                         p = Person(person)
-                        
+
                         source_urls = self.person_sources_from_office(office)
                         person_api_url, person_web_url = source_urls
                         p.add_source(person_api_url, note='api')
@@ -139,6 +144,5 @@ class ChicagoPersonScraper(LegistarAPIPersonScraper, Scraper):
 
                 yield o        
 
-        for p in members.values():
-            yield p
+        yield from members.values()
 

@@ -43,9 +43,12 @@ class BostonPersonScraper(Scraper):
 
     def scrape_homepage(self, href):
         page = self.lxmlize(href)
-        ret = {}
-        ret['bio'] = page.xpath(
-            "//div[@class='content_main_sub']")[0].text_content().strip()
+        ret = {
+            'bio': page.xpath("//div[@class='content_main_sub']")[0]
+            .text_content()
+            .strip()
+        }
+
         ret['image'] = page.xpath(
             "//div[@class='sub_main_hd']//img")[0].attrib['src']
         return ret
@@ -116,11 +119,7 @@ class BostonPersonScraper(Scraper):
             if e == "":
                 continue
 
-            if split[cur]:
-                e = [x.strip() for x in e.split(split[cur])]
-            else:
-                e = [e]
-
+            e = [x.strip() for x in e.split(split[cur])] if split[cur] else [e]
             ret[cur] += e
 
         return ret
@@ -148,20 +147,17 @@ class BostonPersonScraper(Scraper):
                 member = clean_name(member)
                 committee.add_member(member, role='member')
 
-            chair = info.get('chair', None)
-            if chair:
+            if chair := info.get('chair', None):
                 chair = chair[0]
                 chair = clean_name(chair)
                 committee.add_member(chair, role='chair')
 
-            vchair = info.get('vice-chair', None)
-            if vchair:
+            if vchair := info.get('vice-chair', None):
                 vchair = vchair[0]
                 vchair = clean_name(vchair)
                 committee.add_member(vchair, role='vice-chair')
 
-            email = info.get('email', None)
-            if email:
+            if email := info.get('email', None):
                 email = email[0]
                 committee.add_contact_detail(type='email',
                                              value=email,

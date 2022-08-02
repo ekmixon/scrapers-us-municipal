@@ -32,10 +32,10 @@ class Ferguson(Jurisdiction):
         WARDS = 3
         for ward in range(1, WARDS + 1):
             org.add_post(
-                label="Council Member Ward {}".format(ward),
-                role="Council Member Ward {}".format(ward),
+                label=f"Council Member Ward {ward}",
+                role=f"Council Member Ward {ward}",
                 division_id=self.division_id,
-                # num_seats=2,
             )
+
 
         yield org

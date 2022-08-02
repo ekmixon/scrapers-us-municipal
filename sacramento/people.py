@@ -12,11 +12,13 @@ class SacramentoPersonScraper(LegistarAPIPersonScraper):
     def body_offices(self, body):
         body_id = body['BodyId']
 
-        offices_url = self.BASE_URL + '/bodies/{}/OfficeRecords'.format(body_id)
+        offices_url = self.BASE_URL + f'/bodies/{body_id}/OfficeRecords'
 
         for office in self.pages(offices_url, item_key="OfficeRecordId"):
-            office['OfficeRecordFullName'] = "{} {}".format(office['OfficeRecordFirstName'],
-                                                            office['OfficeRecordLastName'])
+            office[
+                'OfficeRecordFullName'
+            ] = f"{office['OfficeRecordFirstName']} {office['OfficeRecordLastName']}"
+
             yield office
 
     def scrape(self):
@@ -103,5 +105,4 @@ class SacramentoPersonScraper(LegistarAPIPersonScraper):
 
                 yield o
 
-        for p in members.values():
-            yield p
+        yield from members.values()

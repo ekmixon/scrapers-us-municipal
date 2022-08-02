@@ -33,9 +33,11 @@ class Pittsburgh(Jurisdiction):
         org = Organization(name="Pittsburgh City Council", classification="legislature")
         for x in range(1, 10):
             org.add_post(
-                "District {}".format(x),
+                f"District {x}",
                 "Councilmember",
-                division_id="ocd-division/country:us/state:pa/place:pittsburgh/council_district:{}".format(x))
+                division_id=f"ocd-division/country:us/state:pa/place:pittsburgh/council_district:{x}",
+            )
+
         yield org
 
         standing_committee = Organization(name="Standing Committee", classification="committee")

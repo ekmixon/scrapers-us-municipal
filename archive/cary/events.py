@@ -28,8 +28,7 @@ class CaryEventsScraper(Scraper):
             dom = when.text  # day of month
             hrefs = event.xpath(".//a[contains(@href, 'htm')]")
             for href in hrefs:
-                for e in self.scrape_event(href):
-                    yield e
+                yield from self.scrape_event(href)
 
 
     def scrape_event(self, href):
@@ -43,11 +42,10 @@ class CaryEventsScraper(Scraper):
             tds = tr.xpath(".//td")
             if len(tds) < 2:
                 continue
-            what, data = [tds.pop(0).text_content().strip() for x in range(2)]
+            what, data = [tds.pop(0).text_content().strip() for _ in range(2)]
             ret[what] = data
 
-        agendas = page.xpath("//a[contains(@title, 'Meeting Agenda')]")
-        if agendas:
+        if agendas := page.xpath("//a[contains(@title, 'Meeting Agenda')]"):
             for agenda in agendas:
                 print("Agenda:", agenda.attrib['href'])
 
@@ -56,13 +54,13 @@ class CaryEventsScraper(Scraper):
         if "-" in t:
             start_time, end_time = (x.strip() for x in t.split("-", 1))
 
-        start_time = "%s %s" % (ret['Date:'], start_time)
+        start_time = f"{ret['Date:']} {start_time}"
         dts = "%B %d, %Y %I:%M %p"
         start = dt.datetime.strptime(start_time, dts)
 
         end = None
         if end_time:
-            end = "%s %s" % (ret['Date:'], end_time)
+            end = f"{ret['Date:']} {end_time}"
             end = dt.datetime.strptime(end, dts)
 
         kwargs = {}

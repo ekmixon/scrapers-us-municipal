@@ -21,8 +21,7 @@ class MiamidadeBillScraper(Scraper):
 
     def matter_redirect(self, naked_matter_link):
         page = self.lxmlize(naked_matter_link)
-        matter_link = page.xpath('//a')[0].attrib['href'].split("'")[1]
-        return matter_link
+        return page.xpath('//a')[0].attrib['href'].split("'")[1]
 
     def matter_table_to_dict(self, page):
         info_dict = {}
@@ -49,8 +48,11 @@ class MiamidadeBillScraper(Scraper):
                                     if ":" in potential_key:
                                         key = potential_key.replace(":","").strip()
                                         info_dict[key.strip()] = []
-                                    value = innermost_tds[1].text_content().strip()
-                                    if value:
+                                    if (
+                                        value := innermost_tds[1]
+                                        .text_content()
+                                        .strip()
+                                    ):
                                         info_dict[key].append(value)
 
                         else:
@@ -92,7 +94,7 @@ class MiamidadeBillScraper(Scraper):
                 action = tds[3].text_content().strip()
                 sent_to = tds[4].text_content().strip()
                 if action and sent_to:
-                    action = action + " to " + sent_to
+                    action = f"{action} to {sent_to}"
 
                 if action == "Adopted":
                     bill.add_action(action, date,
@@ -100,8 +102,7 @@ class MiamidadeBillScraper(Scraper):
                 else:
                     bill.add_action(action, date)
 
-                returned = tds[6].text_content().strip()
-                if returned:
+                if returned := tds[6].text_content().strip():
                     return_date = datetime.strptime(returned,"%m/%d/%Y")
                     return_date = "-".join([str(return_date.year),
                                             str(return_date.month).zfill(2),
@@ -223,7 +224,7 @@ class MiamidadeBillScraper(Scraper):
             except ValueError:
                 name = spons
                 spons_type = "Sponsor"
-            primary = True if "Prime Sponsor" in spons_type else False
+            primary = "Prime Sponsor" in spons_type
             entity = "person"
             if "committee" in name:
                 entity = committee

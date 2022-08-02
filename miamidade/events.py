@@ -25,7 +25,7 @@ class MiamidadeEventScraper(Scraper):
         #more, they are called "nxx", "nxy" and "nxz"
         months = ["cur","nex","nxw"]
         for m in months:
-            doc = self.lxmlize(base_calendar_url + "?next={}".format(m))
+            doc = self.lxmlize(base_calendar_url + f"?next={m}")
             events = doc.xpath("//table[contains(@style,'dotted #ccc')]")
             for event in events:
                 rows = event.xpath(".//tr")
@@ -62,7 +62,7 @@ class MiamidadeEventScraper(Scraper):
                             location_name=where,
                             description=description,
                             status=status)
-                
+
                 e.add_source(link)
                 yield e
 

@@ -64,9 +64,10 @@ def test_private_scrape_dates(bill_scraper, matter, intro_date, num_bills_scrape
         mocker.patch('lametro.LametroBillScraper.matter', return_value=matter)
         mocker.patch('lametro.LametroBillScraper.text', return_value='')
 
-        scrape_results = []
-        for bill in bill_scraper.scrape(matter_ids=matter_id):
-            if type(bill) == Bill:
-                scrape_results.append(bill)
+        scrape_results = [
+            bill
+            for bill in bill_scraper.scrape(matter_ids=matter_id)
+            if type(bill) == Bill
+        ]
 
         assert len(scrape_results) == num_bills_scraped

@@ -25,10 +25,7 @@ class PittsburghEventsScraper(LegistarAPIEventScraper, Scraper) :
         event_time = web_scraper.ical(response.text).subcomponents[0]["DTSTART"].dt
         event_time = pytz.timezone(self.TIMEZONE).localize(event_time)
 
-        key = (event["Name"],
-               event_time)
-
-        return key
+        return event["Name"], event_time
 
     def clean_agenda_item_title(self, item_title):
       if "PUBLIC COMMENTS" in item_title:
@@ -49,14 +46,14 @@ class PittsburghEventsScraper(LegistarAPIEventScraper, Scraper) :
 
             if location == "Council Chambers":
                 location = "Council Chambers, 5th Floor, City-County Building, " \
-                            "414 Grant Street, Pittsburgh, PA 15219"
+                                "414 Grant Street, Pittsburgh, PA 15219"
 
             if not location :
                 continue
 
             status_string = api_event["status"]
 
-            if len(status_string) > 1 and status_string[1] :
+            if len(status_string) > 1 and status_string[1]:
                 status_text = status_string[1].lower()
                 if any(phrase in status_text
                        for phrase in ("rescheduled to",
@@ -74,7 +71,7 @@ class PittsburghEventsScraper(LegistarAPIEventScraper, Scraper) :
                                       "cancelled",
                                       "new date and time",
                                       "rescheduled indefinitely",
-                                      "rescheduled for",)) :
+                                      "rescheduled for",)):
                     status = "cancelled"
                 elif status_text in ("rescheduled", "recessed") :
                     status = "cancelled"
@@ -91,14 +88,14 @@ class PittsburghEventsScraper(LegistarAPIEventScraper, Scraper) :
                                      "change of location",
                                      "revised - meeting date and time") :
                     status = api_event["status"]
-                elif "room" in status_text :
-                    location = status_string[1] + ", " + location
+                elif "room" in status_text:
+                    location = f"{status_string[1]}, {location}"
                 elif status_text in ("wrong meeting date",) :
                     continue
-                else :
+                else:
                     print(status_text)
                     status = api_event["status"]
-            else :
+            else:
                 status = api_event["status"]
 
             if event["Name"] == "Post Agenda":
@@ -131,7 +128,7 @@ class PittsburghEventsScraper(LegistarAPIEventScraper, Scraper) :
 
             participant = event["Name"]
 
-            if participant == "City Council" or participant == "Post Agenda":
+            if participant in ["City Council", "Post Agenda"]:
                 participant = "Pittsburgh City Council"
 
             e.add_participant(name=participant,
@@ -144,11 +141,12 @@ class PittsburghEventsScraper(LegistarAPIEventScraper, Scraper) :
                     identifier = item["EventItemMatterFile"]
                     agenda_item.add_bill(identifier)
 
-            participants = set()
+            participants = {
+                call["RollCallPersonName"]
+                for call in self.rollcalls(api_event)
+                if call["RollCallValueName"] == "Present"
+            }
 
-            for call in self.rollcalls(api_event):
-                if call["RollCallValueName"] == "Present":
-                    participants.add(call["RollCallPersonName"])
 
             for person in participants:
                 e.add_participant(name=person,

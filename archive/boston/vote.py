@@ -78,8 +78,8 @@ class BostonVoteScraper(Scraper):
 
 
     def do_post_back(self, form, event_target, event_argument):
-        block = {name: value for name, value in [(obj.name, obj.value)
-                    for obj in form.xpath(".//input")]}
+        block = dict([(obj.name, obj.value) for obj in form.xpath(".//input")])
+
         block['__EVENTTARGET'] = event_target
         block['__EVENTARGUMENT'] = event_argument
         block['ctl00$MainContent$lblCurrentText'] = (int(

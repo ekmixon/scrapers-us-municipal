@@ -56,9 +56,11 @@ class PittsburghBillScraper(LegistarAPIBillScraper, Scraper):
             action_date =  self.toTime(action_date).date()
             responsible_person = None
 
-            if (responsible_org == "City Council" or
-                responsible_org == "Standing Committee"
-                or responsible_org == "Committee on Hearings"):
+            if responsible_org in [
+                "City Council",
+                "Standing Committee",
+                "Committee on Hearings",
+            ]:
                 responsible_org = "Pittsburgh City Council"
 
             if action_description.lower() in ACTION:
@@ -92,18 +94,18 @@ class PittsburghBillScraper(LegistarAPIBillScraper, Scraper):
 
     def scrape(self, window=3):
         n_days_ago = datetime.datetime.utcnow() - datetime.timedelta(float(window))
+        # If a bill has a duplicate action item that"s causing the entire scrape
+        # to fail, add it to the `problem_bills` array to skip it.
+        # For the time being...nothing to skip!
+
+        problem_bills = []
+
         for matter in self.matters(n_days_ago):
             matter_id = matter["MatterId"]
 
             date = matter["MatterIntroDate"]
             title = matter["MatterTitle"]
             identifier = matter["MatterFile"]
-
-            # If a bill has a duplicate action item that"s causing the entire scrape
-            # to fail, add it to the `problem_bills` array to skip it.
-            # For the time being...nothing to skip!
-
-            problem_bills = []
 
             if identifier in problem_bills:
                 continue
@@ -166,7 +168,7 @@ class PittsburghBillScraper(LegistarAPIBillScraper, Scraper):
                                            bill=bill)
 
                     vote_event.add_source(legistar_web)
-                    vote_event.add_source(legistar_api + "/histories")
+                    vote_event.add_source(f"{legistar_api}/histories")
 
                     for vote in votes:
                         raw_option = vote["VoteValueName"].lower()
@@ -191,9 +193,7 @@ class PittsburghBillScraper(LegistarAPIBillScraper, Scraper):
                                           media_type="application/pdf")
 
             bill.extras = {"local_classification" : matter["MatterTypeName"]}
-            text = self.text(matter_id)
-
-            if text:
+            if text := self.text(matter_id):
                 if text["MatterTextPlain"]:
                     bill.extras["plain_text"] = text["MatterTextPlain"]
 

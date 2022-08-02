@@ -6,10 +6,7 @@ import requests
 class StlScraper(Scraper):
 
 	def lxmlize(self, url, payload=None):
-		if payload:
-			entry = self.post(url, payload).text
-		else:
-			entry = self.get(url).text
+		entry = self.post(url, payload).text if payload else self.get(url).text
 		page = html.fromstring(entry)
 		page.make_links_absolute(url)
 		return page 
@@ -17,9 +14,9 @@ class StlScraper(Scraper):
 class Urls(object):
 
 	BASE_URL = "https://www.stlouis-mo.gov/government"
-	ALDERMEN_HOME = BASE_URL + "/departments/aldermen"
-	BILLS_HOME = BASE_URL + "/city-laws/board-bills/index.cfm"
-	COMMITTEES_HOME = ALDERMEN_HOME + "/committees/committee.cfm" 
+	ALDERMEN_HOME = f"{BASE_URL}/departments/aldermen"
+	BILLS_HOME = f"{BASE_URL}/city-laws/board-bills/index.cfm"
+	COMMITTEES_HOME = f"{ALDERMEN_HOME}/committees/committee.cfm" 
 
 class HumanName(object):
 	""" 
@@ -52,7 +49,7 @@ class HumanName(object):
 		# last name is the farthest-back word that does not contain "."
 		clean_rest = [ w for w in rest if "." not in w ]
 		try: 
-			lastname = " " + clean_rest[-1]
+			lastname = f" {clean_rest[-1]}"
 		except IndexError:
 			lastname = ""
 		return (firstname + lastname).strip()

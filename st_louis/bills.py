@@ -41,7 +41,7 @@ class StLouisBillScraper(StlScraper):
 			bill.add_abstract(abstract=abstract.strip(), note="summary")
 			# TODO trim whitespace from summary
 		except IndexError:
-			print("No abstract for bill {} in session {}".format(bill_id, session_id))
+			print(f"No abstract for bill {bill_id} in session {session_id}")
 
 		# the rest of the fields are found inside this <table>
 		data_table = page.xpath("//table[contains(@class, 'data')]")[0]
@@ -64,7 +64,7 @@ class StLouisBillScraper(StlScraper):
 						description=action_type,	
 						classification=action_type)
 			except ValueError:
-				print("failed to parse these actions: {}".format([line]))
+				print(f"failed to parse these actions: {[line]}")
 
 
 		# co-sponsors
@@ -88,10 +88,10 @@ class StLouisBillScraper(StlScraper):
 
 
 	def bill_table_query(self, key):
-		return "//th[text()='{}:']/../td".format(key)
+		return f"//th[text()='{key}:']/../td"
 
 	def bill_session_url(self, session_id):
-		return Urls.BILLS_HOME + "?sessionBB=" + session_id
+		return f"{Urls.BILLS_HOME}?sessionBB={session_id}"
 
 	def parse_actions(self, action_line):
 		"""
@@ -120,7 +120,7 @@ class StLouisBillScraper(StlScraper):
 				classification = self.action_classifications[act]
 			except KeyError:
 				print(act)
-				raise ValueError("invalid bill action classification: {}".format(act))
+				raise ValueError(f"invalid bill action classification: {act}")
 			# yield a result for each action_type
 			yield date_str, classification
 			

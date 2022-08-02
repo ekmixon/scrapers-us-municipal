@@ -25,5 +25,4 @@ class Boston(Jurisdiction):
     }
 
     def get_organizations(self):
-        org = Organization(name="Boston City Council", classification="legislature")
-        yield org
+        yield Organization(name="Boston City Council", classification="legislature")

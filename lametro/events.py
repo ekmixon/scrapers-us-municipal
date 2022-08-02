@@ -43,9 +43,7 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
 
             else:
                 del unpaired_events[incoming_event.partner_key]
-                paired_events.append(incoming_event)
-                paired_events.append(partner_event)
-
+                paired_events.extend((incoming_event, partner_event))
         return paired_events, unpaired_events.values()
 
     def _find_partner(self, event):
@@ -55,9 +53,9 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
         partners, but every Spanish event should have an
         English partner.
         '''
-        results = list(self.search('/events/', 'EventId',
-                                   event.partner_search_string))
-        if results:
+        if results := list(
+            self.search('/events/', 'EventId', event.partner_search_string)
+        ):
             partner, = results
             partner = LAMetroAPIEvent(partner)
             assert event.is_partner(partner)
@@ -145,20 +143,13 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
                 english_events.append((event, web_event))
 
         for event, web_event in english_events:
-            event_details = []
             event_audio = []
 
-            event_details.append({
-                'url': web_event['Meeting Details']['url'],
-                'note': 'web',
-            })
-
+            event_details = [{'url': web_event['Meeting Details']['url'], 'note': 'web'}]
             if web_event.has_audio:
                 event_audio.append(web_event['Meeting video'])
 
-            matches = spanish_events.pop(event.partner_key, None)
-
-            if matches:
+            if matches := spanish_events.pop(event.partner_key, None):
                 spanish_event, spanish_web_event = matches
 
                 event['SAPEventId'] = spanish_event['EventId']
@@ -184,7 +175,7 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
 
         return english_events
 
-    def scrape(self, window=None) :
+    def scrape(self, window=None):
         if window and float(window) != 0:
             n_days_ago = datetime.datetime.utcnow() - datetime.timedelta(float(window))
         else:
@@ -192,9 +183,13 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
 
         events = self.events(since_datetime=n_days_ago)
 
-        service_councils = set(
-            sc['BodyId'] for sc in self.search('/bodies/', 'BodyId', 'BodyTypeId eq 70 or BodyTypeId eq 75')
-        )
+        service_councils = {
+            sc['BodyId']
+            for sc in self.search(
+                '/bodies/', 'BodyId', 'BodyTypeId eq 70 or BodyTypeId eq 75'
+            )
+        }
+
 
         for event, web_event in self._merge_events(events):
             body_name = event["EventBodyName"]
@@ -267,7 +262,7 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
                     if item["EventItemAgendaNumber"]:
                         # To the notes field, add the item number as given in the agenda minutes
                         agenda_number = item["EventItemAgendaNumber"]
-                        note = "Agenda number, {}".format(agenda_number)
+                        note = f"Agenda number, {agenda_number}"
                         agenda_item['notes'].append(note)
 
                         agenda_item['extras']['agenda_number'] = agenda_number
@@ -311,13 +306,11 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
                 e.add_document(note=web_event['Published minutes']['label'],
                                url=web_event['Published minutes']['url'],
                                media_type="application/pdf")
-            else:
-                approved_minutes = self.find_approved_minutes(event)
-                if approved_minutes:
-                    e.add_document(note=approved_minutes['MatterAttachmentName'],
-                                   url=approved_minutes['MatterAttachmentHyperlink'],
-                                   media_type="application/pdf",
-                                   date=self.to_utc_timestamp(approved_minutes['MatterAttachmentLastModifiedUtc']).date())
+            elif approved_minutes := self.find_approved_minutes(event):
+                e.add_document(note=approved_minutes['MatterAttachmentName'],
+                               url=approved_minutes['MatterAttachmentHyperlink'],
+                               media_type="application/pdf",
+                               date=self.to_utc_timestamp(approved_minutes['MatterAttachmentLastModifiedUtc']).date())
 
             for audio in event['audio']:
                 try:
@@ -368,12 +361,10 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
 
         if item['EventItemMatterFile'] is not None:
 
-            if item['EventItemMatterStatus'] == 'Draft':
-                suppress = True
-            elif item['EventItemMatterType'] == 'Closed Session':
-                suppress = True
-            else:
-                suppress = False
+            suppress = (
+                item['EventItemMatterStatus'] == 'Draft'
+                or item['EventItemMatterType'] == 'Closed Session'
+            )
 
             if suppress:
                 item['EventItemMatterFile'] = None
@@ -404,25 +395,26 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
         result = self.search(
             '/matters/',
             'MatterId',
-            "MatterBodyId eq {} and substringof('{}', MatterTitle) and substringof('Minutes', MatterTitle)".format(event['EventBodyId'], date))
+            f"MatterBodyId eq {event['EventBodyId']} and substringof('{date}', MatterTitle) and substringof('Minutes', MatterTitle)",
+        )
+
 
         try:
             matter, = result
         except ValueError as e:
             if 'not enough values' in str(e):
-                self.warning(
-                    "Couldn't find minutes for the {} meeting of {}."\
-                        .format(name, date))
+                self.warning(f"Couldn't find minutes for the {name} meeting of {date}.")
                 return None
             elif 'too many values to unpack' in str(e):
                 self.warning(
-                    "Found more than one minutes file for the {} meeting of {}."\
-                        .format(name, date))
+                    f"Found more than one minutes file for the {name} meeting of {date}."
+                )
+
                 return None
             else:
                 raise
 
-        attachment_url = self.BASE_URL + '/matters/{}/attachments'.format(matter['MatterId'])
+        attachment_url = self.BASE_URL + f"/matters/{matter['MatterId']}/attachments"
 
 
         attachments = self.get(attachment_url).json()
@@ -432,15 +424,12 @@ class LametroEventScraper(LegistarAPIEventScraper, Scraper):
         elif len(attachments) == 1:
             return attachments[0]
         else:
-            # this meeting had both special and regular board meeting
-            # attached to the minutes matter
-            if date == 'May 28, 2015':
-                attachment_name = 'Regular Board Meeting Minutes on May 28, 2015'
-                attachment, = [each for each in attachments
-                               if each['MatterAttachmentName'] == attachment_name]
-                return attachment
-            else:
+            if date != 'May 28, 2015':
                 raise ValueError("More than one attachement for the approved minutes matter")
+            attachment_name = 'Regular Board Meeting Minutes on May 28, 2015'
+            attachment, = [each for each in attachments
+                           if each['MatterAttachmentName'] == attachment_name]
+            return attachment
 
 
 
@@ -467,10 +456,10 @@ class LAMetroAPIEvent(dict):
 
     @property
     def partner_search_string(self):
-        search_string = "EventBodyName eq '{}'".format(self._partner_name)
-        search_string += " and EventDate eq datetime'{}'".format(self['EventDate'])
-
-        return search_string
+        return (
+            f"EventBodyName eq '{self._partner_name}'"
+            + f" and EventDate eq datetime'{self['EventDate']}'"
+        )
 
     @property
     def partner_key(self):

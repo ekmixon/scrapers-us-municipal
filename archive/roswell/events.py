@@ -74,8 +74,8 @@ class RoswellEventsScraper(Scraper):
         if True in (x in end for x in skip):
             return
 
-        start = "%s %s" % (date, start)
-        end = "%s %s" % (date, end)
+        start = f"{date} {start}"
+        end = f"{date} {end}"
         start, end = (dt.datetime.strptime(x, "%B %d, %Y %I:%M %p") for x in (start, end))
 
         event = Event( name=title, location=ret['Where:'], when=start, end=end)

@@ -93,7 +93,7 @@ class UrlsMeta(type):
     '''This metaclass aggregates the validator functions marked
     using the Urls.validate decorator.
     '''
-    def __new__(meta, name, bases, attrs):
+    def __new__(cls, name, bases, attrs):
         '''Just aggregates the validator methods into a defaultdict
         and stores them on cls._validators.
         '''
@@ -102,8 +102,7 @@ class UrlsMeta(type):
             if hasattr(attr, 'validates'):
                 validators[attr.validates].add(attr)
         attrs['_validators'] = validators
-        cls = type.__new__(meta, name, bases, attrs)
-        return cls
+        return type.__new__(cls, name, bases, attrs)
 
 
 class Urls(with_metaclass(UrlsMeta)):

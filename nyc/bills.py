@@ -61,15 +61,13 @@ class NYCBillScraper(LegistarAPIBillScraper, Scraper):
                        'MatterHistoryPassedFlag')
 
         for action in self.history(matter_id):
-            bill_action = {}
-
             if not action['MatterHistoryActionName']:
                 continue
 
             if action['MatterHistoryId'] == 138469:  # Skip duplicate council approval event
                 continue
 
-            bill_action['action_description'] = action['MatterHistoryActionName'].strip()
+            bill_action = {'action_description': action['MatterHistoryActionName'].strip()}
             bill_action['action_date'] = action['MatterHistoryActionDate']
 
             responsible_org = action['MatterHistoryActionBodyName']
@@ -165,7 +163,7 @@ class NYCBillScraper(LegistarAPIBillScraper, Scraper):
 
     def get_bill(self, matter):
         '''Make Bill object from given matter.'''
-        
+
         '''
         Currently, NYC Legistar does not have conventional "Types" for 
         three newly added committees: https://legistar.council.nyc.gov/Departments.aspx
@@ -276,7 +274,7 @@ class NYCBillScraper(LegistarAPIBillScraper, Scraper):
         legistar_web, legistar_api = [src['url'] for src in bill.sources]
 
         vote_event.add_source(legistar_web)
-        vote_event.add_source(legistar_api + '/histories')
+        vote_event.add_source(f'{legistar_api}/histories')
 
         for vote in votes:
             raw_option = vote['VoteValueName'].lower()
@@ -322,9 +320,7 @@ class NYCBillScraper(LegistarAPIBillScraper, Scraper):
             matters = self.matters()
 
         for matter in matters:
-            bill = self.get_bill(matter)
-
-            if bill:
+            if bill := self.get_bill(matter):
                 for action, vote in self.actions(matter['MatterId']):
                     act = bill.add_action(action['action_description'],
                                           action['action_date'],

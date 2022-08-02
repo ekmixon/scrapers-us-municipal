@@ -24,8 +24,7 @@ class StLouis(Jurisdiction):
                            classification="legislature")
         # add a post for each Ward
         for ward_num in range(1, self.WARD_COUNT + 1):
-            org.add_post(label="Ward {} Alderman".format(ward_num),
-                         role="Alderman")
+            org.add_post(label=f"Ward {ward_num} Alderman", role="Alderman")
         yield org
 
 

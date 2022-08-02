@@ -16,10 +16,7 @@ class LegistarScraper(Scraper):
         self.timeout = 600
 
     def lxmlize(self, url, payload=None):
-        if payload :
-            entry = self.post(url, payload).text
-        else :
-            entry = self.get(url).text
+        entry = self.post(url, payload).text if payload else self.get(url).text
         page = lxml.html.fromstring(entry)
         page.make_links_absolute(url)
         return page
@@ -48,26 +45,30 @@ class LegistarScraper(Scraper):
             next_page = page.xpath("//a[@class='rgCurrentPage']/following-sibling::a[1]")
 
 
-    def parseDetails(self, detail_div) :
+    def parseDetails(self, detail_div):
         """
         Parse the data in the top section of a detail page.
         """
         detail_query = ".//*[starts-with(@id, 'ctl00_ContentPlaceHolder1_lbl')"\
-                       "     or starts-with(@id, 'ctl00_ContentPlaceHolder1_hyp')]"
+                           "     or starts-with(@id, 'ctl00_ContentPlaceHolder1_hyp')]"
         fields = detail_div.xpath(detail_query)
         details = {}
-        
+
         for field_key, field in itertools.groupby(fields, 
-                                                  fieldKey) :
+                                                  fieldKey):
             field = list(field)
             field_1, field_2 = field[0], field[-1]
             key = field_1.text_content().replace(':', '').strip()
-            if field_2.find('.//a') is not None :
-                value = []
-                for link in field_2.xpath('.//a') :
-                    value.append({'label' : link.text_content().strip(),
-                                  'url' : self._get_link_address(link)})
-            else :
+            if field_2.find('.//a') is not None:
+                value = [
+                    {
+                        'label': link.text_content().strip(),
+                        'url': self._get_link_address(link),
+                    }
+                    for link in field_2.xpath('.//a')
+                ]
+
+            else:
                 value = field_2.text_content().strip()
 
             details[key] = value
@@ -95,16 +96,14 @@ class LegistarScraper(Scraper):
                 for key, field in zip(keys, row.xpath("./td")):
                     text_content = self._stringify(field)
 
-                    if field.find('.//a') is not None :
-                        address = self._get_link_address(field.find('.//a'))
-                        if address :
-                            value = {'label': text_content, 
-                                     'url': address}
-                        else :
-                            value = text_content
-                    else :
+                    if field.find('.//a') is None:
                         value = text_content
 
+                    elif address := self._get_link_address(field.find('.//a')):
+                        value = {'label': text_content, 
+                                 'url': address}
+                    else:
+                        value = text_content
                     data[key] = value
 
                 yield data, keys, row
@@ -137,11 +136,13 @@ class LegistarScraper(Scraper):
         time = time.replace(tzinfo=pytz.timezone(self.timezone))
         return time
 
-    def sessionSecrets(self, page) :
+    def sessionSecrets(self, page):
 
-        payload = {}
-        payload['__EVENTARGUMENT'] = None
-        payload['__VIEWSTATE'] = page.xpath("//input[@name='__VIEWSTATE']/@value")[0]
+        payload = {
+            '__EVENTARGUMENT': None,
+            '__VIEWSTATE': page.xpath("//input[@name='__VIEWSTATE']/@value")[0],
+        }
+
         payload['__EVENTVALIDATION'] = page.xpath("//input[@name='__EVENTVALIDATION']/@value")[0]
 
         return(payload)

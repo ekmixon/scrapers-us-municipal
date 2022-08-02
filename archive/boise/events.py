@@ -76,7 +76,7 @@ class BoiseEventScraper(Scraper):
 
         all_day = time is None
 
-        tbuf = "%s %s %s" % (month, day, year)
+        tbuf = f"{month} {day} {year}"
         fmt = "%B %d %Y"
 
         dt_replace = {"Noon": "PM"}
@@ -84,7 +84,7 @@ class BoiseEventScraper(Scraper):
                       [r"^\s+\-\s+", ""]]
 
         if not all_day:
-            tbuf += " %s" % (time)
+            tbuf += f" {time}"
             fmt += " %I:%M %p"
 
         for k, v in dt_replace.items():
@@ -96,8 +96,7 @@ class BoiseEventScraper(Scraper):
         buf = buf.strip()
 
         obj = dt.datetime.strptime(tbuf, fmt)
-        e = Event(name=buf, when=obj, location="City Hall")
-        yield e
+        yield Event(name=buf, when=obj, location="City Hall")
 
 
     def parse_file(self, fd):
@@ -108,4 +107,4 @@ class BoiseEventScraper(Scraper):
                 yield collect
                 collect = line
                 continue
-            collect += " " + line
+            collect += f" {line}"

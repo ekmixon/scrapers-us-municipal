@@ -49,6 +49,7 @@ class PersonScraper(Scraper):
         yield council
 
         data = zip(image_urls, names, person_urls, post_ids)
+        phone_regex = r'\(\d{3}\)[ -]*\d{3}-\d{4}'
         for image_url, name, person_url, post_id in data:
 
             # Create legislator.
@@ -70,14 +71,11 @@ class PersonScraper(Scraper):
                 xpath = '//div[contains(@id, "dnn_RightPaneWide")]'
                 contact_text = urls.detail.xpath(xpath)[0].text_content()
 
-            phone_regex = r'\(\d{3}\)[ -]*\d{3}-\d{4}'
             phone = re.search(phone_regex, contact_text).group()
             memb.contact_details.append(
                 dict(type='phone', value=phone, note='work'))
 
-            # Add email address.
-            email_regex = r'\S+@denvergov.org'
-            email = re.search(email_regex, contact_text).group()
+            email = re.search(r'\S+@denvergov.org', contact_text).group()
             memb.contact_details.append(
                 dict(type='email', value=email, note='work'))
 

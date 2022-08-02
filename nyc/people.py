@@ -142,7 +142,7 @@ class NYCPersonScraper(LegistarAPIPersonScraper, Scraper):
 
         for body in self.bodies():
             if body['BodyTypeName'] in body_types \
-                or body['BodyName'] in ('Legislative Documents Unit',
+                    or body['BodyName'] in ('Legislative Documents Unit',
                                         'Legal and Government Affairs Division'):
 
                 # Skip typo in API data
@@ -166,11 +166,7 @@ class NYCPersonScraper(LegistarAPIPersonScraper, Scraper):
 
                     role = office['OfficeRecordTitle']
 
-                    if role and role.lower() == 'chairperson':
-                        role = 'Chairperson'
-                    else:
-                        role = 'Member'
-
+                    role = 'Chairperson' if role and role.lower() == 'chairperson' else 'Member'
                     person = office['OfficeRecordFullName']
                     person = public_advocates.get(person, person).strip()
 
@@ -193,8 +189,7 @@ class NYCPersonScraper(LegistarAPIPersonScraper, Scraper):
 
                 yield o
 
-        for p in members.values():
-            yield p
+        yield from members.values()
 
 
 PARENT_ORGS = {

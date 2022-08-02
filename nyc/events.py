@@ -86,11 +86,12 @@ class NYCEventsScraper(LegistarAPIEventScraperZip, Scraper):
                     identifier = item["EventItemMatterFile"]
                     agenda_item.add_bill(identifier)
 
-            participants = set()
+            participants = {
+                call['RollCallPersonName'].strip()
+                for call in self.rollcalls(api_event)
+                if call['RollCallValueName'] == 'Present'
+            }
 
-            for call in self.rollcalls(api_event):
-                if call['RollCallValueName'] == 'Present':
-                    participants.add(call['RollCallPersonName'].strip())
 
             for person in participants:
                 e.add_participant(name=person,
@@ -136,22 +137,18 @@ class NYCEventsScraper(LegistarAPIEventScraperZip, Scraper):
         else:
             name = event['Name']
 
-        key = (name, event_time)
-
-        return key
+        return name, event_time
 
     def _event_status(self, event):
         if all(event[k] == 'Deferred' for k in ('EventMinutesStatusName',
                                                 'EventAgendaStatusName')):
-            status = 'cancelled'
+            return 'cancelled'
 
         elif datetime.datetime.utcnow().replace(tzinfo = pytz.utc) > event['start']:
-            status = 'passed'
+            return 'passed'
 
         else:
-            status = 'confirmed'
-
-        return status
+            return 'confirmed'
 
     def _not_in_web_interface(self, event):
         return event['EventAgendaStatusId'] == 1  # agenda not yet final

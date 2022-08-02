@@ -15,9 +15,7 @@ class OCDClient(DjangoClient):
             if value.get('type') == 'ScrapeError':
 
                 extra = kwargs.get('extra', {})
-                arg_v = extra.get('sys.argv')
-
-                if arg_v:
+                if arg_v := extra.get('sys.argv'):
                     for arg in arg_v:
                         if 'window' in arg:
                             return None

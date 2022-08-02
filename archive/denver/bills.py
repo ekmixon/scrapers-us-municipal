@@ -25,12 +25,12 @@ class BillScraper(BaseBillScraper):
                 'meeting_date', 'district', 'sponsor', 'title')
         xpath = '//tr[contains(@class, "datagrid")]'
         for tr in self.urls.search.xpath(xpath)[1:]:
-            bill_id = re.search(r'\((.+)\)', tr.attrib['onclick']).group(1)
+            bill_id = re.search(r'\((.+)\)', tr.attrib['onclick'])[1]
             data = [td.text_content() for td in tr.xpath('td')[1:]]
             yield bill_id, dict(zip(rows, [bill_id] + data))
 
     def get_bill(self, bill_id, **kwargs):
-        url = 'http://www.denvergov.org/sirepub/item.aspx?itemid=%s' % bill_id
+        url = f'http://www.denvergov.org/sirepub/item.aspx?itemid={bill_id}'
         self.urls.add(detail=url)
 
         bill_id = kwargs.pop('number')

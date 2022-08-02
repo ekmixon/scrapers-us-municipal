@@ -43,9 +43,11 @@ class Chicago(Jurisdiction):
         org = Organization(name="Chicago City Council", classification="legislature")
         for x in range(1, 51):
             org.add_post(
-                "Ward {}".format(x),
+                f"Ward {x}",
                 "Alderman",
-                division_id='ocd-division/country:us/state:il/place:chicago/ward:{}'.format(x))
+                division_id=f'ocd-division/country:us/state:il/place:chicago/ward:{x}',
+            )
+
 
         yield org
 

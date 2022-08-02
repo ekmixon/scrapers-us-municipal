@@ -38,8 +38,7 @@ class PhillyEventsScraper(Scraper):
                 when = dt.datetime.strptime(date.text.strip(),
                                             "%m/%d/%Y")
             else:
-                when = dt.datetime.strptime("%s %s" % (date.text.strip(), time),
-                                            "%m/%d/%Y %I:%M %p")
+                when = dt.datetime.strptime(f"{date.text.strip()} {time}", "%m/%d/%Y %I:%M %p")
 
             event = Event(name=name, when=when, location=location)
             event.add_source(url)

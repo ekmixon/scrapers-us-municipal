@@ -19,10 +19,9 @@ class ClevelandPersonScraper(Scraper):
         yield self.cleveland_scrape_people()
 
     def scrape_page(self, url):
-        ret = {}
         page = self.lxmlize(url)
         bio = page.xpath("//div[@class='biotab bio']")[0].text_content()
-        ret['bio'] = bio
+        ret = {'bio': bio}
         email = page.xpath(
             "//a[contains(@href, 'mailto:')]"
         )[0].attrib['href'].strip()[len("mailto:"):]
@@ -56,8 +55,7 @@ class ClevelandPersonScraper(Scraper):
                 scraped_info = self.scrape_page(page)
 
             kwargs = {}
-            biography = scraped_info.get('bio', None)
-            if biography:
+            if biography := scraped_info.get('bio', None):
                 kwargs['biography'] = biography
 
             p = Legislator(name=who,

@@ -40,9 +40,10 @@ class PittsburghPersonScraper(LegistarAPIPersonScraper, Scraper):
         if self.requests_per_minute == 0:
             web_scraper.cache_write_only = False
 
-        web_info = {}
-        for member in web_scraper.councilMembers():
-            web_info[member["Person Name"]] = member
+        web_info = {
+            member["Person Name"]: member
+            for member in web_scraper.councilMembers()
+        }
 
         members = {}
         for member, offices in terms.items():
@@ -100,11 +101,7 @@ class PittsburghPersonScraper(LegistarAPIPersonScraper, Scraper):
                         role = "Member"
 
                     person = office["OfficeRecordFullName"].strip()
-                    if person in members:
-                        person = members[person]
-                    else:
-                        person = Person(person)
-
+                    person = members[person] if person in members else Person(person)
                     person.add_membership(body_name_clean,
                                      role=role,
                                      start_date = self.toDate(office["OfficeRecordStartDate"]),
@@ -112,5 +109,4 @@ class PittsburghPersonScraper(LegistarAPIPersonScraper, Scraper):
 
                 yield organization
 
-        for person in members.values():
-            yield person
+        yield from members.values()

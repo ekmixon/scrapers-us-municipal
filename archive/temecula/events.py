@@ -38,7 +38,7 @@ class TemeculaEventScraper(Scraper):
     def get_start_end(self, obj):
         date = obj['Date:']
         times = obj['time']
-        start, end = ("%s %s" % (date, times[time]) for time in times)
+        start, end = (f"{date} {times[time]}" for time in times)
         return (dt.datetime.strptime(x, "%A, %B %d, %Y %I:%M %p")
                 for x in (start, end))
 
@@ -78,17 +78,19 @@ class TemeculaEventScraper(Scraper):
             start, end = self.get_start_end(ret)
             ret['time']['start'], ret['time']['end'] = start, end
 
-            event = Event(name=ret['Description:'] or "TBA",
-                          location=ret['Location:'],
-                          when=ret['time']['start'],
-                          end=ret['time']['end'])
-            yield event
+            yield Event(
+                name=ret['Description:'] or "TBA",
+                location=ret['Location:'],
+                when=ret['time']['start'],
+                end=ret['time']['end'],
+            )
 
 
     def post_back(self, form, **kwargs):
-        block = {name: value for name, value in [(obj.name, obj.value)
-                    for obj in form.xpath(".//input")]}
-        block.update(kwargs)
+        block = (
+            dict([(obj.name, obj.value) for obj in form.xpath(".//input")])
+            | kwargs
+        )
 
         ret = lxml.html.fromstring(self.urlopen(form.action, block))
 

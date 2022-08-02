@@ -139,7 +139,11 @@ class LametroPersonScraper(LegistarAPIPersonScraper, Scraper):
                                  parent_id={'name' : 'Board of Directors'})
 
                 organization_info = web_info.get(organization_name, {})
-                organization_url = organization_info.get('url', self.WEB_URL + 'https://metro.legistar.com/Departments.aspx')
+                organization_url = organization_info.get(
+                    'url',
+                    f'{self.WEB_URL}https://metro.legistar.com/Departments.aspx',
+                )
+
 
                 o.add_source(self.BASE_URL + '/bodies/{BodyId}'.format(**body), note='api')
                 o.add_source(organization_url, note='web')
@@ -148,11 +152,7 @@ class LametroPersonScraper(LegistarAPIPersonScraper, Scraper):
                     role = office['OfficeRecordTitle']
 
                     if role not in BOARD_OFFICE_ROLES:
-                        if role == 'non-voting member':
-                            role = 'Nonvoting Member'
-                        else:
-                            role = 'Member'
-
+                        role = 'Nonvoting Member' if role == 'non-voting member' else 'Member'
                     person = office['OfficeRecordFullName']
 
                     # Temporarily skip committee memberships, e.g., for
@@ -187,5 +187,4 @@ class LametroPersonScraper(LegistarAPIPersonScraper, Scraper):
 
                 yield o
 
-        for p in members.values():
-            yield p
+        yield from members.values()

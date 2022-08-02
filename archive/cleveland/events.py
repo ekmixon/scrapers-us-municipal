@@ -56,11 +56,10 @@ class ClevelandEventScraper(Scraper):
                     continue
 
                 t = t.strip()
-                for related_entity in ORD_INFO.findall(t):
-                    related.append({
-                        "ord_no": related_entity,
-                        "what": t
-                    })
+                related.extend(
+                    {"ord_no": related_entity, "what": t}
+                    for related_entity in ORD_INFO.findall(t)
+                )
 
             e = Event(name=who, when=when, location='unknown')
             e.add_source(url)

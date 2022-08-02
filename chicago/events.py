@@ -28,11 +28,11 @@ class ChicagoEventsScraper(LegistarAPIEventScraper, Scraper) :
                 continue
 
             if room:
-                location = room + ', ' + location
+                location = f'{room}, {location}'
 
             if not status:
                 status = api_event['status']
-                
+
 
             if description :
                 e = Event(name=api_event["EventBodyName"],
@@ -75,10 +75,11 @@ class ChicagoEventsScraper(LegistarAPIEventScraper, Scraper) :
                     identifier = item["EventItemMatterFile"]
                     agenda_item.add_bill(identifier)
 
-            participants = set()
-            for call in self.rollcalls(api_event):
-                if call['RollCallValueName'] == 'Present':
-                    participants.add(call['RollCallPersonName'])
+            participants = {
+                call['RollCallPersonName']
+                for call in self.rollcalls(api_event)
+                if call['RollCallValueName'] == 'Present'
+            }
 
             for person in participants:
                 e.add_participant(name=person,
@@ -97,7 +98,7 @@ class ChicagoEventsScraper(LegistarAPIEventScraper, Scraper) :
         status = None
         invalid_event = False
 
-        comment = comment if comment else ''
+        comment = comment or ''
         comment = comment.lower().replace('--em--', '').strip()
 
         if any(phrase in comment

@@ -31,17 +31,15 @@ class Miamidade(Jurisdiction):
         people_base_url = "http://miamidade.gov/wps/portal/Main/government"
         org = Organization(name="Miami-Dade County Commission",
             classification="legislature")
-        
+
         for x in range(1,14):
             org.add_post(label="District {dist} Commissioner".format(dist=x),
                 role="Commissioner",
                 division_id=self.division_id)
-        
+
         yield org
 
-        mayor = Organization('Office of the Mayor', classification='executive')
-        yield mayor
-
+        yield Organization('Office of the Mayor', classification='executive')
         mayorPers = Person(name="Carlos A. Giménez",
                        primary_org='executive',
                        role='Mayor',
@@ -52,21 +50,20 @@ class Miamidade(Jurisdiction):
         yield mayorPers
 
 
-        clerk = Organization('Clerk of Courts', classification='executive')
-        yield clerk
-
+        yield Organization('Clerk of Courts', classification='executive')
         clerkPers = Person(name="Harvey Ruvin",
                        primary_org='executive',
                        role='Clerk',
                        primary_org_name='Clerk of Courts')
         clerkPers.add_source(people_base_url, note="Miami-Dade government website")
         clerkPers.add_source("http://www.miami-dadeclerk.com/", note="individual's website")
-        
+
         yield clerkPers
 
 
-        pa = Organization('Office of the Property Appraiser', classification='executive')
-        yield pa
+        yield Organization(
+            'Office of the Property Appraiser', classification='executive'
+        )
 
         paPers = Person(name="Pedro J. Garcia",
                        primary_org='executive',

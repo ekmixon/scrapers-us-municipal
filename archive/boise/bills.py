@@ -20,10 +20,8 @@ class BillScraper(BaseBillScraper):
     def get_agenda_urls(self):
         xpath = '//a/@href'
         urls = self.urls.agenda_list.doc.xpath(xpath)
-        for url in filter(re.compile('\d+ca.pdf$', re.I).search, urls):
-            yield url
-        for url in filter(re.compile('\d+sm.pdf$', re.I).search, urls):
-            yield url
+        yield from filter(re.compile('\d+ca.pdf$', re.I).search, urls)
+        yield from filter(re.compile('\d+sm.pdf$', re.I).search, urls)
 
     def get_bill_ids(self):
         self.urls = Urls(dict(agenda_list=agenda_list), scraper=self)
@@ -68,7 +66,7 @@ class BillScraper(BaseBillScraper):
         title = ' '.join(chunks)
         if len(bill_id) > 20:
             bill_id, title_start = bill_id.split(' ', 1)
-            title = title_start + ' ' + title
+            title = f'{title_start} {title}'
 
         if not bill_id:
             return

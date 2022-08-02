@@ -17,7 +17,7 @@ class StLouisPersonScraper(StlScraper):
 			yield from self.scrape_committee(comm_num)
 
 	def scrape_alderman(self, ward_num):
-		ward_url = "{}/ward-{}".format(Urls.ALDERMEN_HOME, ward_num)
+		ward_url = f"{Urls.ALDERMEN_HOME}/ward-{ward_num}"
 		alderman_url = self.alderman_url(ward_url)
 		alderman_page = self.lxmlize(alderman_url)
 
@@ -28,7 +28,7 @@ class StLouisPersonScraper(StlScraper):
 		# initialize person object with appropriate data so that pupa can 
 		# automatically create a membership object linking this person to
 		# a post in the jurisdiction's "Board of Aldermen" organization
-		district = "Ward {} Alderman".format(ward_num)
+		district = f"Ward {ward_num} Alderman"
 		person = Person(name=name, district=district, role="Alderman", 
 										primary_org="legislature")
 
@@ -93,7 +93,7 @@ class StLouisPersonScraper(StlScraper):
 		return ward_page.xpath("//a[contains(text(), 'Email')]//@href")[0]
 
 	def committee_url(self, comm_num):
-		return Urls.COMMITTEES_HOME + "?committeeDetail=true&comId={}".format(comm_num)
+		return Urls.COMMITTEES_HOME + f"?committeeDetail=true&comId={comm_num}"
 
 	# TODO move this?
 	COMMITTEE_COUNT = 15
